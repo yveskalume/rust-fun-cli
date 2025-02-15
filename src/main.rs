@@ -14,5 +14,4 @@ fn main() {
     if let Err(e) = terminal::run(config) {
         println!("Application Error: {}",e)
     };
-
 }
