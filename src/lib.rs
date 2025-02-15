@@ -4,6 +4,9 @@ mod tests;
 use std::error::Error;
 use std::fs;
 use std::env;
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
 
 pub struct Config {
     pub query: String,
@@ -31,7 +34,16 @@ pub fn run(config: Config) -> Result<(),Box<dyn Error>> {
         search_case_insensitive(&config.query,&content)
     };
 
+    let mut file: Option<File> = None;
+
+    if !result.is_empty() {
+      file = Some(create_result_file(&config.query)?)
+    }
+
     for line in result {
+        if let Some(ref mut f) = file {
+            writeln!(f, "{}", line)?;
+        }
         println!("{}", line);
     }
     Ok(())
@@ -41,7 +53,6 @@ pub fn read_file(file: &str) -> Result<String,Box<dyn Error>> {
     let content = fs::read_to_string(file)?;
     Ok(content)
 }
-
 
 pub fn search_case_sensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
     let mut result = Vec::new();
@@ -62,4 +73,13 @@ pub fn search_case_insensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str
         }
     }
     result
+}
+
+pub fn create_result_file(file: &str) -> Result<File,Box<dyn Error>> {
+    if !Path::new("results").exists() {
+        fs::create_dir_all("results")?; // Create directory (and parents if needed)
+    }
+    let file_path = format!("results/{}.txt",file);
+    let file= File::create(file_path)?;
+    Ok(file)
 }
